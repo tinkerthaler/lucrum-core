@@ -37,8 +37,10 @@ in the same way that classes are used to define overloaded functions.
 module Main where
 
 import                      Control.Monad.IO.Class (liftIO)
+import                      Control.Monad.Logger    (runStderrLoggingT)
 import                      Database.Persist
-import                      Database.Persist.Sqlite
+--import                      Database.Persist.Sqlite
+import                      Database.Persist.Postgresql
 import                      Database.Persist.TH
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"]
@@ -54,22 +56,29 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
      deriving Show
   |]
 
+connStr = "host=localhost dbname=lucrum user=lucrum_admin port=5432"
+
 main :: IO ()
-main = runSqlite ":memory:" $ do
-  runMigration migrateAll
-
-  johnId <- insert $ Person "Johm Doe" $ Just 33
-  janeId <- insert $ Person "Jane Doe" $ Nothing
-
-  insert $ BlogPost "My first post" johnId
-  insert $ BlogPost "One more for good measure" johnId
-
-  oneJohnPost <- selectList [BlogPostAuthorId ==. johnId] [LimitTo 1]
-  liftIO $ print (oneJohnPost :: [Entity BlogPost])
-
-  john <- get johnId
-  liftIO $ print (john :: Maybe Person)
-
-  delete janeId
-  deleteWhere [BlogPostAuthorId ==. johnId]
+--main = runSqlite ":memory:" $ do
+main =
+--  withPostgresqlPool connstr 10 $ \pool -> do
+--    runNoLoggingT . flip runSqlPersistMPool pool $ do 
+  runStderrLoggingT $ withPostgresqlPool connStr 10 $ \pool -> liftIO $ do
+    flip runSqlPersistMPool pool $ do
+      runMigration migrateAll
+    
+      johnId <- insert $ Person "Johm Doe" $ Just 33
+      janeId <- insert $ Person "Jane Doe" $ Nothing
+  
+      insert $ BlogPost "My first post" johnId
+      insert $ BlogPost "One more for good measure" johnId
+    
+      oneJohnPost <- selectList [BlogPostAuthorId ==. johnId] [LimitTo 1]
+      liftIO $ print (oneJohnPost :: [Entity BlogPost])
+    
+      john <- get johnId
+      liftIO $ print (john :: Maybe Person)
+    
+      delete janeId
+      deleteWhere [BlogPostAuthorId ==. johnId]
 

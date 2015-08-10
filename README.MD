@@ -18,3 +18,25 @@ Then to load homebrew/versions/postgresql92 now:
 Or, if you don't want/need launchctl, you can just run:
 
     pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+
+Connect to the database
+
+    psql postgres
+
+Create roles
+
+    CREATE ROLE lucrum_admin LOGIN;
+    CREATE ROLE lucrum_user LOGIN;
+
+Manage the database
+
+    postgres=# SELECT datname FROM pg_database;
+
+Output: 
+
+      datname
+    -----------
+     template1
+     template0
+     postgres
+    (3 rows)
