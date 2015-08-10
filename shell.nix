@@ -1,29 +1,28 @@
-let 
-  pkgs = import <nixpkgs> {};
-  haskellPackages = pkgs.haskellPackages.override {
-    extension = self: super: {
-      lucrum-core = self.callPackage ./lucrum-core.nix {};
-    };
-  };
-  name = "lucrum-core";
-  stdenv = pkgs.stdenv;
-in stdenv.mkDerivation {
-  extraLibraries = [];
-  configureFlags = [];
-  buildInputs = [
-    (haskellPackages.ghcWithPackagesOld (hs: ([
-      hs.cabalInstall
-      hs.hscolour
-      hs.hoogle
-      hs.haddock
-      hs.HUnit
-    ]
-    ++ hs.lucrum-core.propagatedNativeBuildInputs
-    )))
-    pkgs.python
-    pkgs.libxml2
-    pkgs.postgresql
-  ];  
-  inherit name;
-  ME_ENV = "Hello";
-}
+{ nixpkgs ? import <nixpkgs> {}, compiler ? "ghc7101" }:
+
+let
+
+  inherit (nixpkgs) pkgs;
+
+  f = { mkDerivation, base, hspec, HUnit, QuickCheck, stdenv
+      , test-framework, test-framework-hunit, test-framework-quickcheck2
+      }:
+      mkDerivation {
+        pname = "lucrum-core";
+        version = "0.1.0.0";
+        src = ./.;
+        isLibrary = true;
+        isExecutable = true;
+        buildDepends = [ base ];
+        testDepends = [
+          base hspec HUnit QuickCheck test-framework test-framework-hunit
+          test-framework-quickcheck2
+        ];
+        license = stdenv.lib.licenses.mit;
+      };
+
+  drv = pkgs.haskell.packages.${compiler}.callPackage f {};
+
+in
+
+  if pkgs.lib.inNixShell then drv.env else drv
