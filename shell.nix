@@ -4,7 +4,7 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, hspec, HUnit, QuickCheck, stdenv
+  f = { mkDerivation, zlib, postgresql94, base, hspec, HUnit, QuickCheck, stdenv
       , test-framework, test-framework-hunit, test-framework-quickcheck2
       }:
       mkDerivation {
@@ -13,6 +13,7 @@ let
         src = ./.;
         isLibrary = true;
         isExecutable = true;
+        buildTools = [ zlib postgresql94 ];
         buildDepends = [ base ];
         testDepends = [
           base hspec HUnit QuickCheck test-framework test-framework-hunit
